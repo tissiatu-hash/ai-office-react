@@ -63,6 +63,7 @@ export class AgentEntity extends Container {
     const prevFacing = this.agent.facing
     const prevViewFacing = this.agent.viewFacing
     const prevColor = this.agent.color
+    const prevCustomAnimation = this.agent.customAnimation
     this.agent = { ...this.agent, ...patch }
 
     if (this.useSpine && this.spineChar) {
@@ -72,8 +73,11 @@ export class AgentEntity extends Container {
       if (patch.facing != null && patch.facing !== prevFacing) {
         this.spineChar.setFacing(patch.facing)
       }
-      if (patch.state != null && patch.state !== prevState) {
-        this.spineChar.playState(patch.state)
+      if (
+        (patch.state != null && patch.state !== prevState) ||
+        patch.customAnimation !== prevCustomAnimation
+      ) {
+        this.spineChar.playState(this.agent.state, this.agent.customAnimation)
       }
       if (patch.color != null && patch.color !== prevColor) {
         this.spineChar.setAgentColor(patch.color)
@@ -101,6 +105,33 @@ export class AgentEntity extends Container {
     this.bubble.hide()
   }
 
+  playCustomAnimation(animation: string, task?: string) {
+    this.agent = {
+      ...this.agent,
+      state: 'talking',
+      currentTask: task,
+      customAnimation: animation,
+      viewFacing: 'front',
+      facing: 1,
+      targetX: undefined,
+      targetY: undefined,
+      walkPath: undefined,
+      walkPathIndex: undefined,
+      mission: undefined,
+      bubbleText: undefined,
+    }
+
+    if (this.useSpine && this.spineChar) {
+      this.spineChar.setViewFacing('front')
+      this.spineChar.setFacing(1)
+      this.spineChar.playAnimation(animation)
+      this.updateOverlayPositions()
+      return
+    }
+
+    this.syncVisual()
+  }
+
   updateVisuals(state: AgentState, dt: number) {
     if (this.useSpine && this.spineChar) {
       if (
@@ -122,7 +153,7 @@ export class AgentEntity extends Container {
           this.spineChar.setViewFacing('back')
         }
       }
-      this.spineChar.playState(state)
+      this.spineChar.playState(state, this.agent.customAnimation)
     } else {
       this.walkPhase += dt * 8
       this.drawFallbackBody(state, 0)
@@ -162,7 +193,7 @@ export class AgentEntity extends Container {
       this.bubble.show(this.agent.bubbleText)
     }
     if (this.useSpine && this.spineChar) {
-      this.spineChar.playState(this.agent.state)
+      this.spineChar.playState(this.agent.state, this.agent.customAnimation)
       this.spineChar.setFacing(this.agent.facing)
       this.spineChar.setViewFacing(this.agent.viewFacing ?? 'front')
       this.spineChar.setAgentColor(this.agent.color)

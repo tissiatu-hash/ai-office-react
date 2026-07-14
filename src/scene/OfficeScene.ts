@@ -131,6 +131,7 @@ export class OfficeScene {
         walkPathIndex: undefined,
         mission: undefined,
         bubbleText: undefined,
+        customAnimation: undefined,
         viewFacing:
           state === 'working' || state === 'thinking'
             ? ('back' as const)
@@ -139,6 +140,31 @@ export class OfficeScene {
     })
     setOfficeAgents(this.agents)
     this.pushDataToEntities()
+  }
+
+  playAgentAnimation(id: string, animation: string, task?: string) {
+    this.agents = this.agents.map((agent) => {
+      if (agent.id !== id) return agent
+      return {
+        ...agent,
+        state: 'talking' as const,
+        currentTask: task,
+        targetX: undefined,
+        targetY: undefined,
+        walkPath: undefined,
+        walkPathIndex: undefined,
+        mission: undefined,
+        bubbleText: undefined,
+        customAnimation: animation,
+        viewFacing: 'front' as const,
+        facing: 1 as const,
+      }
+    })
+    setOfficeAgents(this.agents)
+    this.pushDataToEntities()
+    this.agentEntities.get(id)?.playCustomAnimation(animation, task)
+    this.pullDataFromEntities()
+    setOfficeAgents(this.agents)
   }
 
   resize(containerWidth: number, containerHeight: number) {

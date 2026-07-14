@@ -38,11 +38,15 @@ export class OfficeSimulator {
       const visitor = visitorByHost.get(agent.id)
       const toward = visitor
         ? talkFacingToward(agent.x, agent.y, visitor.x, visitor.y)
+        : agent.customAnimation
+          ? { viewFacing: 'front' as const, facing: 1 as const }
         : { viewFacing: 'back' as const, facing: 1 as const }
 
       const state =
         visitor
           ? ('talking' as const)
+          : agent.customAnimation
+            ? ('talking' as const)
           : agent.state === 'thinking' || agent.state === 'idle'
             ? agent.state
             : ('working' as const)

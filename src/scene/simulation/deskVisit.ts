@@ -224,7 +224,7 @@ function syncDeskVisitTalkPartners(agents: Agent[]): Agent[] {
       }
     }
 
-    if (agent.state === 'talking' && !agent.mission) {
+    if (agent.state === 'talking' && !agent.mission && !agent.customAnimation) {
       return {
         ...agent,
         state: 'working' as const,

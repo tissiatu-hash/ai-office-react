@@ -21,6 +21,32 @@ const STATE_ACTIONS: Array<{
   { label: '暂时空闲', state: 'idle' },
 ]
 
+const EMOTE_ACTIONS = [
+  { label: '生气', animation: 'emotes/angry' },
+  { label: '打嗝', animation: 'emotes/burp' },
+  { label: '困惑', animation: 'emotes/confused' },
+  { label: '哭泣', animation: 'emotes/crying' },
+  { label: '倒下', animation: 'emotes/dead' },
+  { label: '坚定', animation: 'emotes/determined' },
+  { label: '凝视', animation: 'emotes/dramatic-stare' },
+  { label: '兴奋', animation: 'emotes/excited' },
+  { label: '撒娇', animation: 'emotes/fawning' },
+  { label: '脸红', animation: 'emotes/flushed' },
+  { label: '欢呼', animation: 'emotes/hooray' },
+  { label: '灵感', animation: 'emotes/idea' },
+  { label: '刚刚好', animation: 'emotes/just-right' },
+  { label: '大笑', animation: 'emotes/laugh' },
+  { label: '喜欢', animation: 'emotes/love' },
+  { label: '害怕', animation: 'emotes/scared' },
+  { label: '遮眼', animation: 'emotes/see-no-evil' },
+  { label: '耸肩', animation: 'emotes/shrug' },
+  { label: '闷闷不乐', animation: 'emotes/sulk' },
+  { label: '冒汗', animation: 'emotes/sweat' },
+  { label: '思考表情', animation: 'emotes/thinking' },
+  { label: '吐舌', animation: 'emotes/tongue-out' },
+  { label: '挥手', animation: 'emotes/wave' },
+] as const
+
 export function OfficeCanvas() {
   const hostRef = useRef<HTMLDivElement>(null)
   const sceneRef = useRef<OfficeScene | null>(null)
@@ -33,8 +59,8 @@ export function OfficeCanvas() {
 
     const handleAgentClick = (event: OfficeAgentClick) => {
       const rect = host.getBoundingClientRect()
-      const menuWidth = 220
-      const menuHeight = 260
+      const menuWidth = 260
+      const menuHeight = Math.min(520, rect.height - 24)
       setMenu({
         agent: event.agent,
         rosterNo: event.rosterNo,
@@ -97,6 +123,12 @@ export function OfficeCanvas() {
     setMenu(null)
   }
 
+  const playEmote = (animation: string, label: string) => {
+    if (!menu) return
+    sceneRef.current?.playAgentAnimation(menu.agent.id, animation, label)
+    setMenu(null)
+  }
+
   const startInteraction = (targetRosterNo: number, targetName: string) => {
     if (!menu || targetRosterNo === menu.rosterNo) return
     sceneRef.current?.requestDeskVisit(
@@ -122,6 +154,22 @@ export function OfficeCanvas() {
           {!menu.pickingTarget ? (
             <>
               <div className="agent-action-group">
+                <div className="agent-action-section-title">互动</div>
+                <button
+                  type="button"
+                  className="agent-action-btn"
+                  onClick={() =>
+                    setMenu((current) =>
+                      current ? { ...current, pickingTarget: true } : current,
+                    )
+                  }
+                >
+                  互动…
+                </button>
+              </div>
+
+              <div className="agent-action-group">
+                <div className="agent-action-section-title">状态</div>
                 {STATE_ACTIONS.map((action) => (
                   <button
                     key={action.label}
@@ -135,21 +183,24 @@ export function OfficeCanvas() {
               </div>
 
               <div className="agent-action-group">
-                <button
-                  type="button"
-                  className="agent-action-btn primary"
-                  onClick={() =>
-                    setMenu((current) =>
-                      current ? { ...current, pickingTarget: true } : current,
-                    )
-                  }
-                >
-                  互动…
-                </button>
+                <div className="agent-action-section-title">表情动作</div>
+                <div className="agent-emote-grid">
+                  {EMOTE_ACTIONS.map((action) => (
+                    <button
+                      key={action.animation}
+                      type="button"
+                      className="agent-action-chip"
+                      onClick={() => playEmote(action.animation, action.label)}
+                    >
+                      {action.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </>
           ) : (
             <div className="agent-action-group">
+              <div className="agent-action-section-title">选择互动对象</div>
               <button
                 type="button"
                 className="agent-action-btn subtle"

@@ -79,6 +79,7 @@ export class SpineCharacter extends Container {
   private ready = false
   private pack: SpineCharacterPack | null = null
   private agentState: AgentState = 'idle'
+  private customAnimation: string | undefined
   private facing: 1 | -1 = 1
   private viewFacing: ChibiFacing = 'front'
 
@@ -124,10 +125,29 @@ export class SpineCharacter extends Container {
     this.applyAnimation()
   }
 
-  playState(state: AgentState) {
+  playState(state: AgentState, customAnimation?: string) {
     if (!this.spine || !this.ready || !this.pack) return
     this.agentState = state
+    if (this.customAnimation !== customAnimation) {
+      this.customAnimation = customAnimation
+      this.currentAnim = ''
+    }
     this.applyAnimation()
+  }
+
+  playAnimation(animation: string) {
+    if (!this.spine || !this.ready) return
+    if (!this.spine.skeleton.data.findAnimation(animation)) {
+      console.warn('[SpineCharacter] animation not found', animation)
+      return
+    }
+
+    this.customAnimation = animation
+    this.agentState = 'talking'
+    this.currentAnim = animation
+    const entry = this.spine.state.setAnimation(0, animation, true)
+    this.spine.state.timeScale = 1
+    if (entry) entry.mixDuration = 0.12
   }
 
   getHeadOffsetY(): number {
@@ -150,6 +170,10 @@ export class SpineCharacter extends Container {
 
   private resolveAnimationName(): string {
     if (!this.pack) return 'idle'
+
+    if (this.customAnimation && this.agentState !== 'walking') {
+      return this.customAnimation
+    }
 
     if (this.pack === 'chibi-stickers') {
       if (this.agentState === 'walking') {
