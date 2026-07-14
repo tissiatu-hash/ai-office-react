@@ -16,7 +16,7 @@ import type {
 export type VisitActionMessage = OfficeActionDeskVisit | OfficeActionDeskVisitTour
 
 const ROSTER_MIN = 1
-const ROSTER_MAX = 6
+const ROSTER_MAX = 3
 
 const visitQueue: Array<{
   message: VisitActionMessage
@@ -125,7 +125,7 @@ export function submitVisitAction(
   if (!normalized) {
     invalidCount += 1
     console.warn(
-      '[OfficeDispatch] invalid visit command, rejected (名册仅 1–6，且 visitor≠host)',
+      '[OfficeDispatch] invalid visit command, rejected (名册仅 1–3，且 visitor≠host)',
       message,
     )
     return
