@@ -8,7 +8,7 @@
 }
 
 .office-sidebar {
-  width: 194px;
+  width: 240px;
   flex-shrink: 0;
   background: #fafaf9;
   border-right: 1px solid #e4e2dc;
@@ -345,7 +345,7 @@
 }
 
 .office-right-panel {
-  width: 250px;
+  width: 360px;
   flex-shrink: 0;
   background: #fafaf9;
   border-left: 1px solid #e4e2dc;
@@ -353,7 +353,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .panel-section {
@@ -720,4 +720,129 @@
     border: none;
     border-radius: 0;
   }
+}
+
+.project-stage-card strong {
+  display: block;
+  margin: 3px 0;
+  color: #111;
+  font-size: 15px;
+}
+
+.project-stage-card span:last-child {
+  color: #777;
+  font-size: 12px;
+}
+
+.project-card {
+  padding: 12px;
+  border: 1px solid #eceae4;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.project-card dl {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0;
+}
+
+.project-card dl div {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 8px;
+}
+
+.project-card dt {
+  color: #999;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.project-card dd {
+  margin: 0;
+  color: #333;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.risk-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.risk-list strong {
+  width: 100%;
+  color: #999;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.risk-list span {
+  border-radius: 999px;
+  background: #fff4e5;
+  color: #9a5b00;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.next-action {
+  margin: 0;
+  border-radius: 10px;
+  background: #f4f8ff;
+  color: #334;
+  padding: 9px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.workflow-card {
+  padding: 12px;
+  border: 1px solid #eceae4;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.workflow-card ol {
+  margin: 0;
+  padding-left: 18px;
+  color: #555;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.workflow-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.workflow-actions button {
+  border: 1px solid #eceae4;
+  border-radius: 9px;
+  background: #fafaf9;
+  color: #333;
+  padding: 8px 9px;
+  font: inherit;
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.workflow-actions button:hover {
+  background: #f3f2ef;
+}
+
+.workflow-actions button.primary {
+  grid-column: 1 / -1;
+  border-color: #d9272e;
+  background: #d9272e;
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
 }

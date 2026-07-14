@@ -13,9 +13,9 @@ export const COLORS = {
   agentBody: 0x1a1a1a,
 } as const
 
-/** 2×3 工位区 */
-const DESK_COLS = 2
-const DESK_ROWS = 3
+/** 3-role Telco Project Office workbench */
+const DESK_COLS = 3
+const DESK_ROWS = 1
 const DESK_COL_GAP = 150
 const DESK_ROW_GAP = 140
 const DESK_BLOCK_WIDTH = (DESK_COLS - 1) * DESK_COL_GAP
@@ -54,52 +54,31 @@ export type AgentRosterEntry = {
   task: string
 }
 
-/** 6 位市场部员工（名册序号 1–6） */
+/** 3 Telco Project Office role agents (roster numbers 1–3) */
 export const AGENT_ROSTER: AgentRosterEntry[] = [
   {
-    id: 'marvis',
-    name: '王明',
+    id: 'commercial-agent',
+    name: 'Commercial Agent',
     color: 0xe85d4a,
-    task: '主管：等待交付物',
+    task: 'Customer requirements, commercial scope, pricing assumptions and contract risks',
   },
   {
-    id: 'code-agent',
-    name: '李研',
+    id: 'technical-agent',
+    name: 'Technical Agent',
     color: 0x4a90d9,
-    task: '检索：扫描信息源',
+    task: 'Solution architecture, feasibility, integration dependencies and technical risks',
   },
   {
-    id: 'file-agent',
-    name: '周理',
+    id: 'project-manager-agent',
+    name: 'Project Manager Agent',
     color: 0x9b6dd7,
-    task: '整理：归类情报',
-  },
-  {
-    id: 'app-agent',
-    name: '陈书',
-    color: 0xf5c542,
-    task: '撰写：起草标书',
-  },
-  {
-    id: 'review-agent',
-    name: '刘市',
-    color: 0xf97316,
-    task: '市场：打包情报简报',
-  },
-  {
-    id: 'data-agent',
-    name: '赵审',
-    color: 0x4ecdc4,
-    task: '审核：合规待审队列',
+    task: 'Timeline, owners, milestones, risks, next actions and status summary',
   },
 ]
 
 const BOOT_STATES: AgentState[] = [
   'working',
-  'working',
-  'working',
-  'working',
-  'working',
+  'thinking',
   'working',
 ]
 
@@ -127,23 +106,18 @@ export const INITIAL_AGENTS: Agent[] = buildInitialAgents()
 
 /** 交接流程中的状态标签（头顶 / 侧栏） */
 export const HANDOFF_STATUS = {
-  delivering: '交接递送中…',
-  handingOff: '正在交接…',
-  receiving: '接收交接中…',
-  wrappingUp: '交接收尾中…',
-  planning: '规划交接中…',
+  delivering: 'Delivering project handoff…',
+  handingOff: 'Sharing project context…',
+  receiving: 'Receiving project inputs…',
+  wrappingUp: 'Wrapping up project handoff…',
+  planning: 'Planning next project action…',
 } as const
 
-/** 离座拜访时交给对方的话术 */
+/** Safe demo handoff messages for the scripted Telco Project Office flow */
 export const HANDOFF_VISIT_MESSAGES: ((hostName: string) => string)[] = [
-  (n) => `${n}，这件事交给你了。`,
-  (n) => `${n}，轮到你了，说明在工单里。`,
-  (n) => `${n}，接力给你，上下文在线程里。`,
-  (n) => `${n}，你队列里有最新的交接包。`,
-  (n) => `${n}，工单已转给你，我这边解除了阻塞。`,
-  (n) => `${n}，能从这里接手吗？`,
-  (n) => `${n}，我这边交接完成，交给你了。`,
-  (n) => `${n}，收到后请确认一下。`,
+  (n) => `${n}, please review the HomeHub PoC Demo scope and next actions.`,
+  (n) => `${n}, the PoC handoff is ready with demo-only assumptions and risks.`,
+  (n) => `${n}, please align feasibility, milestones and dependencies for the status summary.`,
 ]
 
 export function pickHandoffVisitMessage(

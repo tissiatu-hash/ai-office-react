@@ -7,7 +7,7 @@ export type ChibiAgentPreset = {
   stateAnims: Partial<Record<AgentState, string>>
 }
 
-/** 6 位 Agent 朝向与标志性动作 */
+/** Agent facing and signature animation presets */
 export const CHIBI_AGENT_PRESETS: Record<string, ChibiAgentPreset> = {
   /** 正面 · determined */
   marvis: {
