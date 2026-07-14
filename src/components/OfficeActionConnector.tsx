@@ -1,20 +1,15 @@
 import { useEffect, useRef } from 'react'
-import {
-  isWebSocketActionSource,
-  OFFICE_WS_URL,
-} from '@/config/officeMode'
-import { OfficeActionWsClient } from '@/services/officeActionWs'
+import { OFFICE_HTTP_ACTIONS_URL } from '@/config/officeMode'
+import { OfficeActionHttpClient } from '@/services/officeActionHttp'
 
-/** WebSocket 模式下连接外部动作源；demo 模式不生效 */
+/** 轮询 HTTP 动作源，将外部动作同步到办公室场景 */
 export function OfficeActionConnector() {
-  const clientRef = useRef<OfficeActionWsClient | null>(null)
+  const clientRef = useRef<OfficeActionHttpClient | null>(null)
 
   useEffect(() => {
-    if (!isWebSocketActionSource()) return
-
-    const client = new OfficeActionWsClient()
+    const client = new OfficeActionHttpClient()
     clientRef.current = client
-    client.connect(OFFICE_WS_URL)
+    client.connect(OFFICE_HTTP_ACTIONS_URL)
 
     return () => {
       client.disconnect()

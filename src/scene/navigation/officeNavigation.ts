@@ -1,5 +1,5 @@
 import type { Desk } from '@/types/agent'
-import { DESKS, WAYPOINTS } from '@/scene/layout/officeLayout'
+import { DESKS } from '@/scene/layout/officeLayout'
 import {
   COL_AISLE_MARGIN,
   getRowCorridorY,
@@ -44,8 +44,6 @@ const COL_CLUSTER_THRESH = 70
 const ROW_CLUSTER_THRESH = 50
 const PARTITION_X = 240
 const HALL_GAP = 50
-
-const AMENITIES = WAYPOINTS.filter((w) => w.kind !== 'desk')
 
 let graph: NavGraph | null = null
 let deskSignature = ''
@@ -146,11 +144,6 @@ export function buildNavGraph(desks: Desk[]): NavGraph {
     }
   }
 
-  for (const wp of AMENITIES) {
-    addNode(wp.id, wp.x, wp.y)
-    linkEdge(adj, 'hall', wp.id)
-  }
-
   const nearestCol = (x: number) => {
     let best = 0
     let bestD = Infinity
@@ -208,12 +201,6 @@ function ensureGraph(): NavGraph {
     graph = buildNavGraph(DESKS)
   }
   return graph
-}
-
-/** 工位布局变更后调用（改 DESKS / buildDesks 后自动也会在下次寻路时重建） */
-export function rebuildOfficeNavigation(desks: Desk[] = DESKS) {
-  deskSignature = desks.map((d) => `${d.x},${d.y},${d.seatX},${d.seatY}`).join('|')
-  graph = buildNavGraph(desks)
 }
 
 export function findDeskAtSeat(x: number, y: number): Desk | undefined {
@@ -709,17 +696,4 @@ export function planWalkToDeskSeat(
   points.push({ x: desk.seatX, y: desk.seatY })
 
   return dedupePoints(points)
-}
-
-export function pickCorridorDestination(): NavPoint {
-  const g = ensureGraph()
-  const amenity = AMENITIES[Math.floor(Math.random() * AMENITIES.length)]
-  if (Math.random() < 0.55 && amenity) {
-    const n = g.nodes.get(amenity.id)!
-    return { x: n.x, y: n.y }
-  }
-  const keys = [...g.nodes.keys()].filter((k) => k.startsWith('aisle-'))
-  const id = keys[Math.floor(Math.random() * keys.length)] ?? 'hall'
-  const n = g.nodes.get(id)!
-  return { x: n.x, y: n.y }
 }

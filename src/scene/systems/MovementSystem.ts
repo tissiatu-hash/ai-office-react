@@ -1,9 +1,6 @@
 import type { Agent } from '@/types/agent'
 import type { AgentEntity } from '@/scene/entities/AgentEntity'
-import {
-  ACTION_TASKS,
-  DESKS,
-} from '@/scene/layout/officeLayout'
+import { DESKS } from '@/scene/layout/officeLayout'
 import {
   resolveWalkViewFacing,
   viewFacingToLR,
@@ -11,10 +8,6 @@ import {
 
 const ARRIVE_THRESHOLD = 6
 const WALK_SPEED = 90
-
-function pick<T>(arr: readonly T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]
-}
 
 function isHomeDeskSeat(deskId: string | undefined, x: number, y: number): boolean {
   if (!deskId) return false
@@ -77,9 +70,7 @@ export class MovementSystem {
           state: atHome ? 'working' : 'idle',
           viewFacing,
           facing: viewFacingToLR(viewFacing),
-          currentTask: atHome
-            ? (agent.currentTask ?? pick(ACTION_TASKS))
-            : undefined,
+          currentTask: atHome ? agent.currentTask : undefined,
         })
         entity.setPosition(tx, ty)
         continue

@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev.mjs",
+    "dev:vite": "vite",
+    "action-gateway": "node scripts/action-gateway.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -13,8 +15,7 @@
     "@esotericsoftware/spine-pixi-v8": "~4.2.0",
     "pixi.js": "^8.18.1",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6",
-    "zustand": "^5.0.13"
+    "react-dom": "^19.2.6"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

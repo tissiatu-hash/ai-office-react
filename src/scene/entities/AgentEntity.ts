@@ -1,4 +1,4 @@
-import { Container, Graphics } from 'pixi.js'
+import { Container, Graphics, Rectangle } from 'pixi.js'
 import type { Agent, AgentState } from '@/types/agent'
 import {
   resolveWalkViewFacing,
@@ -45,6 +45,10 @@ export class AgentEntity extends Container {
     } else {
       this.initFallbackGraphics()
     }
+
+    this.eventMode = 'static'
+    this.cursor = 'pointer'
+    this.hitArea = new Rectangle(-34, -92, 68, 124)
 
     this.syncVisual()
     this.position.set(agent.x, agent.y)

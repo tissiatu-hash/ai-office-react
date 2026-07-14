@@ -1,8 +1,8 @@
 import '@esotericsoftware/spine-pixi-v8'
 import { Assets } from 'pixi.js'
 
-/** 优先 Spine 官方高质量示例：Chibi Stickers → Mix-and-Match → 简笔 office */
-export type SpineCharacterPack = 'chibi-stickers' | 'mix-and-match' | 'office'
+/** AI 办公室小人动画资源包 */
+export type SpineCharacterPack = 'chibi-stickers'
 
 let loaded = false
 let activePack: SpineCharacterPack | null = null
@@ -14,16 +14,6 @@ const PACKS: { id: SpineCharacterPack; skeleton: string; atlas: string }[] = [
     id: 'chibi-stickers',
     skeleton: '/assets/characters/chibi-stickers/chibi-stickers.json',
     atlas: '/assets/characters/chibi-stickers/chibi-stickers.atlas',
-  },
-  {
-    id: 'mix-and-match',
-    skeleton: '/assets/characters/mix-and-match/mix-and-match.json',
-    atlas: '/assets/characters/mix-and-match/mix-and-match.atlas',
-  },
-  {
-    id: 'office',
-    skeleton: '/assets/characters/office/office.json',
-    atlas: '/assets/characters/office/office.atlas',
   },
 ]
 

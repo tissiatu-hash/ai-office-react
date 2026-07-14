@@ -1,9 +1,9 @@
 import { Application, Container, Graphics, Sprite } from 'pixi.js'
-import type { Agent } from '@/types/agent'
+import type { FederatedPointerEvent } from 'pixi.js'
+import type { Agent, AgentState } from '@/types/agent'
 import {
   COLORS,
   DESKS,
-  getOfficeViewportBounds,
   INITIAL_AGENTS,
   pickHandoffVisitMessage,
   SCENE_HEIGHT,
@@ -13,23 +13,22 @@ import { AgentEntity } from '@/scene/entities/AgentEntity'
 import { DeskEntity } from '@/scene/entities/DeskEntity'
 import { MovementSystem } from '@/scene/systems/MovementSystem'
 import { AnimationSystem } from '@/scene/systems/AnimationSystem'
-import { ConversationSystem } from '@/scene/systems/ConversationSystem'
 import { OfficeSimulator } from '@/scene/simulation/OfficeSimulator'
-import { rosterAgentAt } from '@/scene/simulation/deskVisit'
-import {
-  MarketingWorkflowScheduler,
-  type MarketingPath,
-} from '@/scene/simulation/marketingWorkflow'
-import type { OfficeTourRoute } from '@/scene/simulation/officeTourRoutes'
 import { bindOfficeScene } from '@/scene/officeSceneBridge'
-import { isDemoActionSource } from '@/config/officeMode'
 import { notifyVisitMissionActivity } from '@/services/officeActionDispatcher'
-import { useOfficeStore } from '@/store/officeStore'
+import { setOfficeAgents } from '@/store/officeStore'
 import {
   getOfficeBackgroundTexture,
   loadOfficeAssets,
 } from '@/scene/assets/loadOfficeAssets'
 import { loadSpineAssets } from '@/scene/assets/loadSpineAssets'
+
+export type OfficeAgentClick = {
+  agent: Agent
+  rosterNo: number
+  clientX: number
+  clientY: number
+}
 
 export class OfficeScene {
   private app: Application | null = null
@@ -40,16 +39,16 @@ export class OfficeScene {
 
   private movement = new MovementSystem()
   private animation = new AnimationSystem()
-  private conversation = new ConversationSystem()
   private simulator = new OfficeSimulator()
 
   private agents: Agent[] = INITIAL_AGENTS.map((a) => ({ ...a }))
-  private destroyed = false
-  private tourRoutes: OfficeTourRoute[] = []
-  private tourRouteIndex = 0
-  private watchingVisitorRosterNo: number | null = null
-  private marketingWorkflow = new MarketingWorkflowScheduler()
-  private useMarketingWorkflow = isDemoActionSource()
+  private readonly options: {
+    onAgentClick?: (event: OfficeAgentClick) => void
+  }
+
+  constructor(options: { onAgentClick?: (event: OfficeAgentClick) => void } = {}) {
+    this.options = options
+  }
 
   async init(container: HTMLElement, width: number, height: number) {
     const app = new Application()
@@ -77,90 +76,12 @@ export class OfficeScene {
       )
     }
 
-    this.simulator.setAmbientFrozen(true)
-    this.conversation.setEnabled(false)
-
     this.drawMap(this.world)
     this.spawnOffice(this.world)
     this.pushDataToEntities()
 
     app.ticker.add(this.onTick)
-    this.startSimulationLoop()
     bindOfficeScene(this)
-
-    if (isDemoActionSource()) {
-      window.setTimeout(() => {
-        if (!this.destroyed) this.startMarketingWorkflow('bid')
-      }, 800)
-    }
-  }
-
-  /** 市场部流程演示：标书线 / 市场情报线 */
-  startMarketingWorkflow(path: MarketingPath = 'bid') {
-    this.useMarketingWorkflow = true
-    this.tourRoutes = []
-    this.watchingVisitorRosterNo = null
-    this.marketingWorkflow.start(path)
-    const step = this.marketingWorkflow.currentStep()
-    if (step) this.runMarketingStep(step)
-  }
-
-  /**
-   * 按序自动播放拜访路线（路径测试用，会关闭市场部流程）。
-   */
-  startDemoTourSchedule(routes: OfficeTourRoute[]) {
-    this.useMarketingWorkflow = false
-    this.tourRoutes = [...routes]
-    this.tourRouteIndex = 0
-    this.watchingVisitorRosterNo = null
-    this.startNextScheduledTour()
-  }
-
-  private runMarketingStep(step: {
-    visitorRosterNo: number
-    hostRosterNo: number
-    message: string
-  }) {
-    this.watchingVisitorRosterNo = step.visitorRosterNo
-    this.requestDeskVisit(
-      step.visitorRosterNo,
-      step.hostRosterNo,
-      step.message,
-    )
-  }
-
-  private startNextScheduledTour() {
-    if (this.tourRouteIndex >= this.tourRoutes.length) return
-
-    const route = this.tourRoutes[this.tourRouteIndex]!
-    this.tourRouteIndex += 1
-    this.watchingVisitorRosterNo = route.visitorRosterNo
-    this.requestDeskVisitTour(route.visitorRosterNo, route.hostRosterNos)
-  }
-
-  private checkWorkflowAdvance() {
-    if (this.watchingVisitorRosterNo == null) return
-
-    const visitor = rosterAgentAt(this.agents, this.watchingVisitorRosterNo)
-    if (visitor?.mission) return
-
-    this.watchingVisitorRosterNo = null
-
-    if (this.useMarketingWorkflow) {
-      const next = this.marketingWorkflow.advanceAfterVisit()
-      if (next) {
-        this.runMarketingStep(next)
-        return
-      }
-      window.setTimeout(() => {
-        if (this.destroyed || !this.useMarketingWorkflow) return
-        const first = this.marketingWorkflow.startNextRun()
-        if (first) this.runMarketingStep(first)
-      }, 2500)
-      return
-    }
-
-    this.startNextScheduledTour()
   }
 
   /** 名册序号从 1 开始：visitor 去找 host 说一句话后回座继续工作 */
@@ -193,25 +114,49 @@ export class OfficeScene {
     this.pushDataToEntities()
   }
 
+  getAgents(): Agent[] {
+    return this.agents.map((agent) => ({ ...agent }))
+  }
+
+  setAgentState(id: string, state: AgentState, task?: string) {
+    this.agents = this.agents.map((agent) => {
+      if (agent.id !== id) return agent
+      return {
+        ...agent,
+        state,
+        currentTask: task,
+        targetX: undefined,
+        targetY: undefined,
+        walkPath: undefined,
+        walkPathIndex: undefined,
+        mission: undefined,
+        bubbleText: undefined,
+        viewFacing:
+          state === 'working' || state === 'thinking'
+            ? ('back' as const)
+            : agent.viewFacing,
+      }
+    })
+    setOfficeAgents(this.agents)
+    this.pushDataToEntities()
+  }
+
   resize(containerWidth: number, containerHeight: number) {
     if (!this.app || !this.world) return
     this.app.renderer.resize(containerWidth, containerHeight)
     this.fitStage(containerWidth, containerHeight)
   }
 
-  /** 等比缩放工位内容区并居中，画布铺满容器不变形 */
+  /** 等比缩放完整办公室场景并居中，任何屏幕比例下都不裁切内容 */
   private fitStage(containerWidth: number, containerHeight: number) {
     if (!this.world) return
 
-    const bounds = getOfficeViewportBounds()
     const scale = Math.min(
-      containerWidth / bounds.width,
-      containerHeight / bounds.height,
+      containerWidth / SCENE_WIDTH,
+      containerHeight / SCENE_HEIGHT,
     )
-    const offsetX =
-      (containerWidth - bounds.width * scale) / 2 - bounds.x * scale
-    const offsetY =
-      (containerHeight - bounds.height * scale) / 2 - bounds.y * scale
+    const offsetX = (containerWidth - SCENE_WIDTH * scale) / 2
+    const offsetY = (containerHeight - SCENE_HEIGHT * scale) / 2
 
     this.world.scale.set(scale)
     this.world.position.set(offsetX, offsetY)
@@ -226,7 +171,6 @@ export class OfficeScene {
   }
 
   destroy() {
-    this.destroyed = true
     bindOfficeScene(null)
     this.app?.ticker.remove(this.onTick)
     this.app?.destroy(true, { children: true })
@@ -251,25 +195,12 @@ export class OfficeScene {
       this.agentEntities,
     )
     this.pushDataToEntities()
-    this.checkWorkflowAdvance()
-
-    const pair = this.conversation.tick(dt, this.agents)
-    if (pair) {
-      this.agents = this.simulator.startConversation(
-        this.agents,
-        pair.a,
-        pair.b,
-      )
-      this.conversation.applyConversation(this.agentEntities, pair)
-      this.pushDataToEntities()
-    }
 
     this.animation.update(this.agentEntities, dt)
     this.sortOfficeDepth()
     this.syncDeskOccupancy()
 
-    useOfficeStore.getState().setAgents(this.agents)
-    useOfficeStore.getState().incrementTick()
+    setOfficeAgents(this.agents)
     notifyVisitMissionActivity(this.agents)
   }
 
@@ -349,6 +280,15 @@ export class OfficeScene {
       const entity = new AgentEntity(agent)
       this.agentEntities.set(agent.id, entity)
       entity.zIndex = agent.y
+      entity.on('pointertap', (event: FederatedPointerEvent) => {
+        event.stopPropagation()
+        this.options.onAgentClick?.({
+          agent: { ...entity.data },
+          rosterNo: this.agents.findIndex((a) => a.id === agent.id) + 1,
+          clientX: event.clientX,
+          clientY: event.clientY,
+        })
+      })
       layer.addChild(entity)
     }
 
@@ -368,7 +308,7 @@ export class OfficeScene {
     const bgTex = getOfficeBackgroundTexture()
     if (bgTex) {
       const bg = new Sprite(bgTex)
-      const scale = Math.max(
+      const scale = Math.min(
         SCENE_WIDTH / bgTex.width,
         SCENE_HEIGHT / bgTex.height,
       )
@@ -381,16 +321,5 @@ export class OfficeScene {
     }
 
     parent.addChildAt(map, 0)
-  }
-
-  private startSimulationLoop() {
-    const bump = () => {
-      if (this.destroyed) return
-      if (Math.random() > 0.6) {
-        useOfficeStore.getState().bumpStats()
-      }
-      setTimeout(bump, 3000 + Math.random() * 2000)
-    }
-    bump()
   }
 }

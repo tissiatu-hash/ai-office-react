@@ -1,5 +1,5 @@
 import { Spine } from '@esotericsoftware/spine-pixi-v8'
-import { Color, Container, Graphics } from 'pixi.js'
+import { Container, Graphics } from 'pixi.js'
 import type { AgentState } from '@/types/agent'
 import {
   getSpineAtlasAlias,
@@ -12,7 +12,6 @@ import {
   resolveChibiPresetAnim,
 } from '@/scene/characters/chibiAgentPresets'
 import { getChibiSkinName } from '@/scene/characters/chibiStickerSkins'
-import { resolveMixAndMatchSkin } from '@/scene/characters/mixAndMatchSkins'
 
 type AnimMap = Record<AgentState, string>
 
@@ -24,16 +23,8 @@ type PackConfig = {
   /** 左右用不同动画名，不用 scale 镜像 */
   directional?: boolean
   timeScale?: Partial<Record<AgentState, number>>
-  badgeSlot?: string
   /** 方向性动画：按朝向选 left/right 键 */
   animLR?: Partial<Record<AgentState, { left: string; right: string }>>
-}
-
-/** 挂名字：chibi 用发顶附近骨骼，避免头骨中心导致名字在脸中间 */
-const HEAD_BONE: Partial<Record<SpineCharacterPack, string>> = {
-  'chibi-stickers': 'hair-front',
-  'mix-and-match': 'head',
-  office: 'head',
 }
 
 /**
@@ -77,33 +68,6 @@ const PACK_CONFIG: Record<SpineCharacterPack, PackConfig> = {
     } satisfies Partial<Record<AgentState, { left: string; right: string }>>,
     timeScale: { thinking: 0.85, talking: 1.1 },
   },
-  'mix-and-match': {
-    scale: 0.26,
-    y: 8,
-    shadow: { w: 22, h: 6, y: 6 },
-    anim: {
-      idle: 'idle',
-      walking: 'walk',
-      working: 'aware',
-      thinking: 'dress-up',
-      talking: 'blink',
-    },
-    timeScale: { thinking: 0.7, talking: 1.4 },
-  },
-  office: {
-    scale: 0.72,
-    y: 18,
-    shadow: { w: 16, h: 5, y: 20 },
-    anim: {
-      idle: 'idle',
-      walking: 'walk',
-      working: 'work',
-      thinking: 'think',
-      talking: 'talk',
-    },
-    timeScale: { thinking: 0.75, talking: 1.15 },
-    badgeSlot: 'badge',
-  },
 }
 
 export class SpineCharacter extends Container {
@@ -133,25 +97,8 @@ export class SpineCharacter extends Container {
 
   setAgentColor(color: number) {
     if (!this.spine) return
-    const cfg = this.pack ? PACK_CONFIG[this.pack] : null
-
-    if (cfg?.badgeSlot) {
-      const slot = this.spine.skeleton.findSlot(cfg.badgeSlot)
-      if (slot) {
-        const c = new Color(color)
-        slot.color.set(c.red, c.green, c.blue, 1)
-      }
-      return
-    }
-
-    // 官方 Chibi / Mix-and-Match：保持原画肤色与服装，不整身染色
-    if (this.pack === 'chibi-stickers' || this.pack === 'mix-and-match') {
-      this.spine.skeleton.color.set(1, 1, 1, 1)
-      return
-    }
-
-    const c = new Color(color)
-    this.spine.skeleton.color.set(c.red, c.green, c.blue, 0.92)
+    void color
+    this.spine.skeleton.color.set(1, 1, 1, 1)
   }
 
   setFacing(dir: 1 | -1) {
@@ -189,39 +136,16 @@ export class SpineCharacter extends Container {
     const sy = Math.abs(this.spine.scale.y)
     const gap = 5
 
-    // Chibi：只跟头骨走，固定抬到发顶；不用包围盒（剑/帽檐会把点拉偏）
-    if (this.pack === 'chibi-stickers') {
-      const head = this.spine.skeleton.findBone('head-base')
-      if (!head) return this.spine.y - 84
-      const headCenter = this.spine.y + head.worldY * sy
-      if (headCenter > this.spine.y + 2) {
-        return this.spine.y - 84
-      }
-      return headCenter - 50 * sy - 6
+    const head = this.spine.skeleton.findBone('head-base')
+    if (!head) {
+      return this.spine.y - 84
     }
 
-    const candidates: number[] = []
-    const boneName = HEAD_BONE[this.pack]
-    if (boneName) {
-      const bone = this.spine.skeleton.findBone(boneName)
-      if (bone) {
-        const lift = this.pack === 'mix-and-match' ? 18 : 10
-        candidates.push(this.spine.y + bone.worldY * sy - lift - gap)
-      }
+    const headCenter = this.spine.y + head.worldY * sy
+    if (headCenter > this.spine.y + 2) {
+      return this.spine.y - 84
     }
-
-    const local = this.spine.getLocalBounds()
-    if (local.height > 4) {
-      const crownY = local.y + local.height * 0.08
-      candidates.push(this.spine.y + crownY - gap)
-    }
-
-    // Pixi Y 向下为正：取较大值 = 更靠近角色，避免飘到场景顶部
-    if (candidates.length > 0) {
-      return Math.max(...candidates)
-    }
-
-    return -58
+    return headCenter - 50 * sy - gap
   }
 
   private resolveAnimationName(): string {
@@ -309,12 +233,6 @@ export class SpineCharacter extends Container {
         const skinName = getChibiSkinName(this.agentId)
         if (spine.skeleton.data.findSkin(skinName)) {
           spine.skeleton.setSkinByName(skinName)
-          spine.skeleton.setSlotsToSetupPose()
-        }
-      } else if (pack === 'mix-and-match') {
-        const skin = resolveMixAndMatchSkin(spine.skeleton.data, this.agentId)
-        if (skin) {
-          spine.skeleton.setSkin(skin)
           spine.skeleton.setSlotsToSetupPose()
         }
       }

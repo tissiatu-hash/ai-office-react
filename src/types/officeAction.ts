@@ -1,20 +1,20 @@
 import type { AgentState } from '@/types/agent'
 
-export type OfficeWsDeskVisit = {
+export type OfficeActionDeskVisit = {
   type: 'desk_visit'
   visitor: number
   host: number
   message: string
 }
 
-export type OfficeWsDeskVisitTour = {
+export type OfficeActionDeskVisitTour = {
   type: 'desk_visit_tour'
   visitor: number
   hosts: number[]
   message?: string
 }
 
-export type OfficeWsSetState = {
+export type OfficeActionSetState = {
   type: 'set_state'
   state: AgentState
   task?: string
@@ -23,7 +23,7 @@ export type OfficeWsSetState = {
   agentId?: string
 }
 
-export type OfficeWsMessage =
-  | OfficeWsDeskVisit
-  | OfficeWsDeskVisitTour
-  | OfficeWsSetState
+export type OfficeActionMessage =
+  | OfficeActionDeskVisit
+  | OfficeActionDeskVisitTour
+  | OfficeActionSetState

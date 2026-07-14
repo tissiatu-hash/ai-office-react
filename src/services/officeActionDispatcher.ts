@@ -6,14 +6,14 @@ import {
   requestDeskVisit,
   requestDeskVisitTour,
 } from '@/scene/officeSceneBridge'
-import { useOfficeStore } from '@/store/officeStore'
+import { getOfficeAgents } from '@/store/officeStore'
 import type { Agent } from '@/types/agent'
 import type {
-  OfficeWsDeskVisit,
-  OfficeWsDeskVisitTour,
+  OfficeActionDeskVisit,
+  OfficeActionDeskVisitTour,
 } from '@/types/officeAction'
 
-export type VisitActionMessage = OfficeWsDeskVisit | OfficeWsDeskVisitTour
+export type VisitActionMessage = OfficeActionDeskVisit | OfficeActionDeskVisitTour
 
 const ROSTER_MIN = 1
 const ROSTER_MAX = 6
@@ -90,7 +90,7 @@ function drainQueueIfNeeded() {
 function tryDrainQueue() {
   if (OFFICE_DISPATCH_MODE === 'skip') return
 
-  const agents = useOfficeStore.getState().agents
+  const agents = getOfficeAgents()
   if (isDispatchBusy(agents)) return
 
   while (visitQueue.length > 0) {
@@ -132,7 +132,7 @@ export function submitVisitAction(
   }
 
   const mode = OFFICE_DISPATCH_MODE
-  const agents = useOfficeStore.getState().agents
+  const agents = getOfficeAgents()
   const busy = isDispatchBusy(agents)
 
   if (mode === 'skip') {
@@ -203,7 +203,7 @@ export function getDispatchStats(): {
   invalidCount: number
   completedCount: number
 } {
-  const agents = useOfficeStore.getState().agents
+  const agents = getOfficeAgents()
   return {
     mode: OFFICE_DISPATCH_MODE,
     queueDepth: visitQueue.length,

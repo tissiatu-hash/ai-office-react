@@ -1,10 +1,7 @@
-import type { Agent, AgentState, Desk, Waypoint } from '@/types/agent'
+import type { Agent, AgentState, Desk } from '@/types/agent'
 
 export const SCENE_WIDTH = 960
 export const SCENE_HEIGHT = 640
-
-/** 办公室 AI 员工数量（与工位数一致） */
-export const AGENT_COUNT = 6
 
 export const COLORS = {
   floor: 0xffffff,
@@ -28,19 +25,6 @@ const DESK_ORIGIN_X = (SCENE_WIDTH - DESK_BLOCK_WIDTH) / 2
 const DESK_ORIGIN_Y = (SCENE_HEIGHT - DESK_BLOCK_HEIGHT) / 2
 export const SEAT_OFFSET_Y = 45
 
-/** 视口适配时围绕工位区的有效内容范围（避免宽屏下两侧留白失衡） */
-const VIEWPORT_PAD_X = 200
-const VIEWPORT_PAD_Y = 120
-
-export function getOfficeViewportBounds() {
-  return {
-    x: DESK_ORIGIN_X - VIEWPORT_PAD_X,
-    y: DESK_ORIGIN_Y - VIEWPORT_PAD_Y,
-    width: DESK_BLOCK_WIDTH + VIEWPORT_PAD_X * 2,
-    height: DESK_BLOCK_HEIGHT + VIEWPORT_PAD_Y * 2,
-  }
-}
-
 function buildDesks(): Desk[] {
   const desks: Desk[] = []
   let n = 0
@@ -62,25 +46,6 @@ function buildDesks(): Desk[] {
 }
 
 export const DESKS: Desk[] = buildDesks()
-
-/**
- * 修改 DESK_* 布局常量后调用，重建 DESKS 数组。
- * 寻路图会在下次走路时根据新坐标自动重建。
- */
-export function syncOfficeLayout(): Desk[] {
-  const next = buildDesks()
-  DESKS.length = 0
-  DESKS.push(...next)
-  return DESKS
-}
-
-export const WAYPOINTS: Waypoint[] = DESKS.map((d) => ({
-  id: d.id,
-  label: d.id,
-  x: d.seatX,
-  y: d.seatY,
-  kind: 'desk' as const,
-}))
 
 export type AgentRosterEntry = {
   id: string
@@ -168,48 +133,6 @@ export const HANDOFF_STATUS = {
   wrappingUp: '交接收尾中…',
   planning: '规划交接中…',
 } as const
-
-/** 工位上执行已接手的任务（市场部） */
-export const ACTION_TASKS = [
-  '扫描行业资讯…',
-  '向频道发布更新…',
-  '按主题整理来源…',
-  '标注标书/市场情报…',
-  '撰写标书章节…',
-  '落实审核意见…',
-  '打包市场简报…',
-  '执行合规检查…',
-  '转交下一负责人…',
-  '等待主管签批…',
-] as const
-
-/** 路过闲聊：市场部交接对话 */
-export const CHAT_HANDOFF_PAIRS: readonly [string, string][] = [
-  [
-    '主管安排了新一轮扫描，能接手一下信息流吗？',
-    '没问题，标书相关的我会发到团队频道。',
-  ],
-  [
-    '团队频道有新消息，可以开始整理了吗？',
-    '收到，我会区分标书就绪和一般市场情报。',
-  ],
-  [
-    '这份资料看起来可以写标书了，你能接手吗？',
-    '好的，我起草完就送去审核。',
-  ],
-  [
-    '这是一般市场笔记，请归档给团队。',
-    '明白，整理完我会把简报交给主管。',
-  ],
-  [
-    '标书初稿已在你的审核队列里。',
-    '我会批注，需要修改的话会退回。',
-  ],
-  [
-    '修改稿已提交，请再核对合规部分。',
-    '正在审，通过的话我会转给主管。',
-  ],
-]
 
 /** 离座拜访时交给对方的话术 */
 export const HANDOFF_VISIT_MESSAGES: ((hostName: string) => string)[] = [

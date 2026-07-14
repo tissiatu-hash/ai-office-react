@@ -58,11 +58,3 @@ export interface Desk {
   seatY: number
   occupiedBy?: string
 }
-
-export interface Waypoint {
-  id: string
-  label: string
-  x: number
-  y: number
-  kind: 'desk' | 'coffee' | 'treadmill' | 'restroom' | 'lounge'
-}
